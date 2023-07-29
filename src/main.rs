@@ -1,3 +1,4 @@
+use std::fmt::Result;
 use std::io;
 use std::io::Write;
 
@@ -9,14 +10,7 @@ fn main() {
         definition: String::from("Used for greeting."),
     };
     test(test_word);
-    match select_option(&["zero", "one", "two"]) {
-        Ok(n) => {
-            println!("{}", n);
-        }
-        Err(e) => {
-            println!("{e}");
-        }
-    }
+    println!("{}", select_option(&["zero", "one", "two"]));
 }
 
 struct Word {
@@ -29,26 +23,29 @@ fn test(w: Word) {
     println!("{}", w.word);
 }
 
-fn select_option(options: &[&str]) -> Result<usize, io::Error> {
+fn select_option(options: &[&str]) -> usize {
     for (i, option) in options.into_iter().enumerate() {
         println!("{i}) {option}");
     }
-    print!(">");
-    io::stdout().flush()?;
 
     let mut input: String;
     loop {
+        print!(">");
+        io::stdout().flush().unwrap();
         input = String::new();
-        io::stdin().read_line(&mut input)?;
-        match input.trim().parse::<usize>() {
-            Ok(n) => {
-                return Ok(n);
+        io::stdin().read_line(&mut input).unwrap();
+        let n = input.trim().parse::<usize>();
+        match n {
+            Ok(i) => {
+                if i < options.len() {
+                    return i;
+                }
             }
-            Err(_) => {
-                println!("Invalid input {}. Input one of the options", input.trim());
-                print!(">");
-                io::stdout().flush()?;
-            }
+            Err(_) => {}
         }
+        eprintln!(
+            "Invalid input {}. Please select one of the options.",
+            input.trim()
+        );
     }
 }
