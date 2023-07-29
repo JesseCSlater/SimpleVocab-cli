@@ -1,16 +1,16 @@
-use std::fmt::Result;
+#![feature(let_chains)]
 use std::io;
 use std::io::Write;
 
 fn main() {
     println!("Welcome to SimpleVocab!");
-    let test_word: Word = Word {
+    let hello: Word = Word {
         word: String::from("Hello"),
         synonyms: Vec::from([String::from("Hi"), String::from("Greetings")]),
         definition: String::from("Used for greeting."),
     };
-    test(test_word);
-    println!("{}", select_option(&["zero", "one", "two"]));
+    test(hello);
+    println!("{}", select_option(&["zero", "one", "two"]))
 }
 
 struct Word {
@@ -28,20 +28,15 @@ fn select_option(options: &[&str]) -> usize {
         println!("{i}) {option}");
     }
 
-    let mut input: String;
+    let mut input: String = String::new();
     loop {
         print!(">");
         io::stdout().flush().unwrap();
-        input = String::new();
+        input.clear();
         io::stdin().read_line(&mut input).unwrap();
         let n = input.trim().parse::<usize>();
-        match n {
-            Ok(i) => {
-                if i < options.len() {
-                    return i;
-                }
-            }
-            Err(_) => {}
+        if let Ok(i) = n && i < options.len() {
+            return i
         }
         eprintln!(
             "Invalid input {}. Please select one of the options.",
