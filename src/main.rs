@@ -1,26 +1,60 @@
 #![feature(let_chains)]
+use chrono::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::fs::File;
 use std::io;
 use std::io::Write;
 
 fn main() {
     println!("Welcome to SimpleVocab!");
-    let hello: Word = Word {
-        word: String::from("Hello"),
-        synonyms: Vec::from([String::from("Hi"), String::from("Greetings")]),
+    let mut hello: Word = Word {
+        word: String::from("hello"),
+        synonym: String::from("hi, greetings"),
         definition: String::from("Used for greeting."),
+        test_history: Vec::new(),
     };
-    test(hello);
-    println!("{}", select_option(&["zero", "one", "two"]))
+    test(&mut hello);
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 struct Word {
     word: String,
-    synonyms: Vec<String>,
+    synonym: String,
     definition: String,
+    test_history: Vec<(DateTime<Utc>, TestResult)>,
 }
 
-fn test(w: Word) {
+#[derive(Serialize, Deserialize, Debug)]
+enum TestResult {
+    Know,
+    DontKnow,
+}
+
+fn test(w: &mut Word) {
     println!("{}", w.word);
+    loop {
+        match select_option(&[
+            "Know",
+            "Don't know",
+            "Show synonyms",
+            "Show definition",
+            "Back",
+        ]) {
+            0 => {
+                w.test_history.push((Utc::now(), TestResult::Know));
+                break;
+            }
+            1 => {
+                w.test_history.push((Utc::now(), TestResult::DontKnow));
+                break;
+            }
+            2 => println!("{}", w.synonym),
+            3 => println!("{}", w.definition),
+            4 => return,
+            _ => return,
+        }
+    }
+    println!("{}", serde_json::to_string(&w).unwrap());
 }
 
 fn select_option(options: &[&str]) -> usize {
@@ -34,8 +68,7 @@ fn select_option(options: &[&str]) -> usize {
         io::stdout().flush().unwrap();
         input.clear();
         io::stdin().read_line(&mut input).unwrap();
-        let n = input.trim().parse::<usize>();
-        if let Ok(i) = n && i < options.len() {
+        if let Ok(i) = input.trim().parse::<usize>() && i < options.len() {
             return i
         }
         eprintln!(
